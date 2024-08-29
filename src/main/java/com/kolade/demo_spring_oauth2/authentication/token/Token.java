@@ -2,11 +2,7 @@ package com.kolade.demo_spring_oauth2.authentication.token;
 
 
 
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +15,7 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 @AllArgsConstructor
 @Data
 @Entity
+@Table(name = "tokens")
 public class Token {
 
     @Id
@@ -26,6 +23,7 @@ public class Token {
     @Column(unique = true, nullable = false)
     private Integer id;
     private String userId;
+    @Column(unique = true, nullable = false)
     private String token;
     private String tokenType = OAuth2AccessToken.TokenType.BEARER.getValue();
     private boolean isExpired;
