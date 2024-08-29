@@ -1,13 +1,11 @@
 package com.kolade.demo_spring_oauth2.authentication.token;
 
 
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
 
 
 @Builder
@@ -22,10 +20,10 @@ public class Token {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(unique = true, nullable = false)
     private Integer id;
-    private String userId;
+    private Integer userId;
     @Column(unique = true, nullable = false)
     private String token;
-    private String tokenType = OAuth2AccessToken.TokenType.BEARER.getValue();
+    private String tokenType = TokenType.BEARER.name();
     private boolean isExpired;
     private boolean isRevoked;
 
