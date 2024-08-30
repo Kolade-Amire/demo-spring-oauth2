@@ -3,7 +3,6 @@ package com.kolade.demo_spring_oauth2.authentication;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kolade.demo_spring_oauth2.authentication.token.Token;
 import com.kolade.demo_spring_oauth2.authentication.token.TokenRepository;
-import com.kolade.demo_spring_oauth2.security.LoginAttemptService;
 import com.kolade.demo_spring_oauth2.user.Role;
 import com.kolade.demo_spring_oauth2.user.User;
 import com.kolade.demo_spring_oauth2.user.UserPrincipal;
@@ -12,6 +11,7 @@ import com.kolade.demo_spring_oauth2.user.dto.UserMapper;
 import com.kolade.demo_spring_oauth2.util.Constants;
 import com.kolade.demo_spring_oauth2.util.HttpResponse;
 import jakarta.persistence.EntityExistsException;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -35,6 +36,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+
+
 
 
     public String doPasswordsMatch(String p1, String p2) {
@@ -54,20 +57,18 @@ public class AuthService {
 
     public RegisterResponse register(RegisterRequest request) {
         validateNewUser(request.getEmail());
-        doPasswordsMatch(request.getPassword(), request.getConfirmPassword());
         var password = doPasswordsMatch(request.getPassword(), request.getConfirmPassword());
-
 
         var user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
+                .password(passwordEncoder.encode(password))
                 .role(Role.USER)
                 .authProvider("local")
                 .createdAt(LocalDateTime.now())
                 .isBlocked(false)
                 .isAccountExpired(false)
-                .isEmailVerified(false)
+                .isEmailVerified(true)
                 .profileName(request.getProfileName())
                 .passwordLastChangedDate(LocalDate.now())
                 .build();
@@ -110,9 +111,16 @@ public class AuthService {
         );
 
         var user = userService.getUserByEmail(request.getEmail());
+
+        tokenRepository.findByUserId(user.getId()).ifPresent(tokenRepository::delete);
+
         var userPrincipal = new UserPrincipal(user);
+
         var accessToken = jwtService.generateAccessToken(userPrincipal);
         var refreshToken = jwtService.generateRefreshToken(userPrincipal);
+
+
+
         saveUserRefreshToken(user, refreshToken);
 
         var response = HttpResponse.builder()
@@ -122,10 +130,14 @@ public class AuthService {
                 .message(Constants.AUTHENTICATED_MESSAGE)
                 .build();
 
+        var userDto = UserMapper.mapUserToUserAuthDto(user);
+
+
         return AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .httpResponse(response)
+                .user(userDto)
                 .build();
 
 
@@ -145,26 +157,28 @@ public class AuthService {
     }
 
 
-    public void refreshAccessToken (HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public void refreshAccessToken (HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        final String refreshToken;
+        final String accessToken;
         final String userEmail;
         if (authHeader == null || authHeader.startsWith(Constants.TOKEN_PREFIX)) {
             return;
         }
 
-        refreshToken = authHeader.substring(Constants.TOKEN_PREFIX.length());
-        userEmail = jwtService.extractUsername(refreshToken);
+        accessToken = authHeader.substring(Constants.TOKEN_PREFIX.length());
+        userEmail = jwtService.extractUsername(accessToken);
+
         if (userEmail != null) {
             var user = this.userService.getUserByEmail(userEmail);
             var userPrincipal = new UserPrincipal(user);
-            if (jwtService.isTokenValid(refreshToken, userPrincipal)) {
-                var accessToken = jwtService.generateAccessToken(userPrincipal);
+            var refreshToken = tokenRepository.findByUserId(user.getId()).orElseThrow(() -> new EntityNotFoundException("Unknown user or token"));
+            if (jwtService.isTokenValid(refreshToken.getToken(), userPrincipal)) {
+                var newAccessToken = jwtService.generateAccessToken(userPrincipal);
 
                 var authResponse = AuthResponse.builder()
-                        .accessToken(accessToken)
-                        .refreshToken(refreshToken)
+                        .accessToken(newAccessToken)
+                        .refreshToken(refreshToken.getToken())
                         .build();
 
                 new ObjectMapper().writeValue(response.getOutputStream(), authResponse);

@@ -25,5 +25,6 @@ public class Constants {
             BASE_URL + "/auth/**",
             "/oauth2/**",
             BASE_URL + "/oauth2/**",
+            "/h2-console/**"
     };
 }

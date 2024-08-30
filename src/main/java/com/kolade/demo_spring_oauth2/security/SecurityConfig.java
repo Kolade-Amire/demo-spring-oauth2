@@ -28,29 +28,21 @@ public class SecurityConfig {
 
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
     private final CustomUserDetailsService userDetailsService;
-    ;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final LogoutHandler logoutHandler;
     private final CustomAuthenticationProvider authenticationProvider;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-        return configuration.getAuthenticationManager();
-    }
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(req -> req
                         .requestMatchers(Constants.PUBLIC_URLS).permitAll()
                         .anyRequest().authenticated()
 
@@ -58,7 +50,6 @@ public class SecurityConfig {
                 .sessionManagement(smc -> smc
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .oauth2Login(Customizer.withDefaults())
                 .authenticationProvider(authenticationProvider)
                 .exceptionHandling(exc -> exc
                         .accessDeniedHandler(jwtAccessDeniedHandler)
