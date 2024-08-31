@@ -12,7 +12,6 @@ import com.kolade.demo_spring_oauth2.util.Constants;
 import com.kolade.demo_spring_oauth2.util.HttpResponse;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -65,7 +64,7 @@ public class AuthService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(password))
                 .role(Role.USER)
-                .authProvider("local")
+                .authProvider(AuthProvider.LOCAL)
                 .createdAt(LocalDateTime.now())
                 .isBlocked(false)
                 .isAccountExpired(false)

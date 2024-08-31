@@ -1,6 +1,8 @@
 package com.kolade.demo_spring_oauth2.security;
 
+import com.kolade.demo_spring_oauth2.authentication.oauth2.CustomOAuth2UserService;
 import com.kolade.demo_spring_oauth2.user.CustomUserDetailsService;
+import com.kolade.demo_spring_oauth2.user.UserService;
 import com.kolade.demo_spring_oauth2.util.Constants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -17,6 +19,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
@@ -32,6 +37,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final LogoutHandler logoutHandler;
     private final CustomAuthenticationProvider authenticationProvider;
+    private final UserService userService;
 
 
 
@@ -50,6 +56,11 @@ public class SecurityConfig {
                 .sessionManagement(smc -> smc
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2Service()))
+                )
                 .authenticationProvider(authenticationProvider)
                 .exceptionHandling(exc -> exc
                         .accessDeniedHandler(jwtAccessDeniedHandler)
@@ -67,6 +78,11 @@ public class SecurityConfig {
         ;
 
         return http.build();
+    }
+
+    @Bean
+    public OAuth2UserService<OAuth2UserRequest, OAuth2User> customOAuth2Service () {
+        return new CustomOAuth2UserService(userService);
     }
 
 
