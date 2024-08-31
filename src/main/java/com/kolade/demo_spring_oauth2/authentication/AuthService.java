@@ -12,6 +12,7 @@ import com.kolade.demo_spring_oauth2.util.Constants;
 import com.kolade.demo_spring_oauth2.util.HttpResponse;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -123,6 +124,7 @@ public class AuthService {
 
         saveUserRefreshToken(user, refreshToken);
 
+
         var response = HttpResponse.builder()
                 .httpStatusCode(HttpStatus.OK.value())
                 .httpStatus(HttpStatus.OK)
@@ -135,7 +137,6 @@ public class AuthService {
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
-                .refreshToken(refreshToken)
                 .httpResponse(response)
                 .user(userDto)
                 .build();
