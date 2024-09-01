@@ -1,6 +1,9 @@
 package com.kolade.demo_spring_oauth2.security;
 
+import com.kolade.demo_spring_oauth2.authentication.JwtService;
 import com.kolade.demo_spring_oauth2.authentication.oauth2.CustomOAuth2UserService;
+import com.kolade.demo_spring_oauth2.authentication.oauth2.OAuth2AuthenticationSuccessHandler;
+import com.kolade.demo_spring_oauth2.authentication.token.TokenRepository;
 import com.kolade.demo_spring_oauth2.user.CustomUserDetailsService;
 import com.kolade.demo_spring_oauth2.user.UserService;
 import com.kolade.demo_spring_oauth2.util.Constants;
@@ -23,6 +26,7 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 
@@ -38,6 +42,8 @@ public class SecurityConfig {
     private final LogoutHandler logoutHandler;
     private final CustomAuthenticationProvider authenticationProvider;
     private final UserService userService;
+    private final JwtService jwtService;
+    private final TokenRepository tokenRepository;
 
 
 
@@ -57,9 +63,11 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/login")
+                        .loginPage("/api/v1/auth/login")
+                        .defaultSuccessUrl("/api/v1/auth/dashboard", true)
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2Service()))
+                        .successHandler(oAuth2AuthenticationSuccessHandler())
                 )
                 .authenticationProvider(authenticationProvider)
                 .exceptionHandling(exc -> exc
@@ -83,6 +91,11 @@ public class SecurityConfig {
     @Bean
     public OAuth2UserService<OAuth2UserRequest, OAuth2User> customOAuth2Service () {
         return new CustomOAuth2UserService(userService);
+    }
+
+    @Bean
+    public AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler() {
+        return new OAuth2AuthenticationSuccessHandler(jwtService,  tokenRepository);
     }
 
 

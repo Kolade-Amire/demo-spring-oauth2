@@ -11,7 +11,7 @@ public class UserMapper {
                 .email(user.getEmail())
                 .profileName(user.getProfileName())
                 .role(user.getRole())
-                .authProvider(user.getAuthProvider())
+                .authProvider(user.getAuthProvider().toString())
                 .createdAt(user.getCreatedAt())
                 .lastLoginAt(user.getLastLoginAt())
                 .build();

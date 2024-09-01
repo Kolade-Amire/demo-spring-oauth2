@@ -33,6 +33,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             return;
         }
 
+
         //generate tokens
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         String accessToken = jwtService.generateAccessToken(userPrincipal);
