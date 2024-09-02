@@ -6,6 +6,7 @@ import com.kolade.demo_spring_oauth2.user.User;
 import com.kolade.demo_spring_oauth2.user.UserPrincipal;
 import com.kolade.demo_spring_oauth2.user.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -23,11 +24,13 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oauth2User = super.loadUser(userRequest);
+        System.out.println("OAuth2 User Attributes: " + oauth2User.getAttributes());
 
         try {
             return processOAuth2User(userRequest, oauth2User);
         } catch (Exception exception) {
-            throw new OAuth2AuthenticationException(exception.getMessage());
+            System.err.println("Exception occurred: " + exception.getMessage());
+            throw new OAuth2AuthenticationException("Error processing OAuth2 user: " + exception.getMessage());
         }
     }
 
@@ -37,13 +40,13 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                         .getRegistrationId(), oauth2User.getAttributes()
         );
 
-        User user = userService.getUserByEmail(oAuth2UserInfo.getEmail());
-        if(user == null) {
-            user = registerUser(userRequest, oAuth2UserInfo);
-        }else {
+        User user;
+        try {
+            user = userService.getUserByEmail(oAuth2UserInfo.getEmail());
             user = updateExistingUser(user, oAuth2UserInfo);
+        } catch (UsernameNotFoundException ex) {
+            user = registerUser(userRequest, oAuth2UserInfo);
         }
-
         return UserPrincipal.create(user, oauth2User.getAttributes());
     }
 
