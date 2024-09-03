@@ -7,7 +7,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -19,7 +18,7 @@ public class AuthController {
 
     private final AuthService service;
     private final LogoutService logoutService;
-    private final ClientRegistrationRepository clientRegistrationRepository;
+
 
 
     @PostMapping("/register")

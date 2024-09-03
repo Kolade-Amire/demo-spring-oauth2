@@ -178,7 +178,6 @@ public class AuthService {
 
                 var authResponse = AuthResponse.builder()
                         .accessToken(newAccessToken)
-                        .refreshToken(refreshToken.getToken())
                         .build();
 
                 new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
